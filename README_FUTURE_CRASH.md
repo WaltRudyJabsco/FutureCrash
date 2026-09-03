@@ -1,3 +1,6 @@
+<img width="1350" height="845" alt="Screenshot 2026-09-02 at 8 27 13 PM" src="https://github.com/user-attachments/assets/bfb6bdfb-f074-4d86-b8a4-afcff2db176c" />
+
+
 # FUTURE CRASH // ZERO
 
 **A local AI workstation disguised as a slightly haunted 1980s
@@ -12,6 +15,9 @@ glitches, synthesized bleeps, and occasional machine anxiety.
 
 It is designed to feel less like a conventional chatbot and more like a
 computer you leave running.
+
+<img width="1350" height="852" alt="Screenshot 2026-09-02 at 8 29 12 PM" src="https://github.com/user-attachments/assets/2b30259f-c930-4fb3-bc90-baf48e55f71a" />
+
 
 ## Requirements
 
