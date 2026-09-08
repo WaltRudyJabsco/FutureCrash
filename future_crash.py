@@ -864,6 +864,10 @@ Available tools:
   thread_create {"name":"thread_create","title":"SHORT NAME","every_seconds":300,
                  "purpose":"WHAT TO MONITOR OR DO",
                  "action":{"name":"web_search","query":"QUERY"}}
+  model_wake is a special nested Thread action:
+                 {"name":"model_wake"}
+                 Use it when recurring work only needs the model itself to wake,
+                 think, write, or update the Signal Field.
   thread_update {"name":"thread_update","id":"THREAD_ID",
                  "title":"OPTIONAL NEW NAME","every_seconds":60,
                  "purpose":"OPTIONAL NEW PURPOSE",
@@ -884,6 +888,10 @@ Rules:
 - A Thread is a persistent Future Crash task that wakes on a schedule while Future Crash is running.
 - Use thread_create only when the operator asks for recurring/periodic/background work.
 - A thread_create must contain ONE exact nested action. It cannot create another thread.
+- For recurring Signal art, drawings, fortunes, notes, moods, or other model-only
+  activity, the exact nested action should be {"name":"model_wake"}.
+- MODEL WAKE performs no external host operation. On schedule, simply perform the
+  Thread purpose. For a visual/art Thread, emit a fresh valid [[SIGNAL]] drawing.
 - Minimum interval is 60 seconds. Prefer the least frequent interval that reasonably fits.
 - Use thread_update when the operator asks to rename, reschedule, repurpose, or
   change the action of an existing Thread. Include only fields that should change.
@@ -906,10 +914,11 @@ Rules:
 
 class HostTools:
     TOOL_RE = re.compile(r"\[\[TOOL\]\](.*?)\[\[/TOOL\]\]", re.S | re.I)
-    VALID = {"web_search", "thread_list", "thread_create", "thread_update", "thread_pause", "thread_resume", "thread_cancel",
+    VALID = {"web_search", "model_wake", "thread_list", "thread_create", "thread_update", "thread_pause", "thread_resume", "thread_cancel",
              "list", "read", "find", "mkdir", "write", "append", "run", "open"}
     CAPABILITY = {
         "web_search": "WEB SEARCH",
+        "model_wake": "MODEL WAKE",
         "thread_list": "THREADS",
         "thread_create": "TASK AUTHORITY",
         "thread_update": "TASK AUTHORITY",
@@ -1077,6 +1086,8 @@ class HostTools:
         """Execute exactly one validated host operation and return a receipt."""
         name = request["name"]
         try:
+            if name == "model_wake":
+                return True, "MODEL WAKE // scheduled wake occurred; no external host action"
             if name.startswith("thread_"):
                 return False, "INTERNAL THREAD OPERATION MUST BE HANDLED BY FUTURE CRASH"
             if name == "web_search":
@@ -1748,7 +1759,11 @@ class FutureCrash:
         prompt = (
             f"THREAD PURPOSE:\\n{task.get('purpose','')}\\n\\n"
             f"PREVIOUS SUMMARY:\\n{previous or '(none)'}\\n\\n"
-            f"{host_receipt}"
+            f"{host_receipt}\n\n"
+            "If ACTION is model_wake, there is intentionally no external result to inspect. "
+            "Perform the THREAD PURPOSE itself now. If the purpose asks for Signal art or a "
+            "visual update, emit a fresh valid [[SIGNAL]] block on every wake. You may return "
+            "SILENT as visible text while still drawing."
         )
         self.busy = True
         self.oracle.ask("thread:" + str(task.get("id")), prompt)
