@@ -1,4 +1,4 @@
-# FUTURE CRASH // ZERO 
+# FUTURE CRASH // ZERO {"{"}VERSION{"}"} — Release Candidate
 
 **A local AI workstation disguised as a slightly haunted 1980s terminal.**
 
@@ -11,12 +11,38 @@ bleeps.
 
 The terminal is the idle state. The assistant is the machine underneath it.
 
+## Future Crash + LOOK
+
+**Future Crash works by itself, but it was designed to live alongside LOOK.**
+
+Future Crash is the ambient AI surface; LOOK is the fast, quiet inspection layer underneath it. Press `esc` from Future Crash to drop directly into your real interactive shell, use `lk` to inspect files, processes, ports, Git, Ollama, networking, and the machine itself, then type `exit` or press `ctrl-d` to return to Future Crash exactly where you left it.
+
+```text
+FUTURE CRASH
+     │ esc
+     ▼
+real shell  →  lk machine
+            →  lk ports
+            →  lk git .
+            →  lk ollama status
+     │ exit / ctrl-d
+     ▼
+FUTURE CRASH
+```
+
+The projects remain deliberately independent. LOOK is not bundled with Future Crash and neither requires the other. They work together because they share the shell.
+
+**Recommended setup: install both.**
+
+> **LOOK repository:** replace this line with the current LOOK GitHub URL.
+
 ## Requirements
 
 - macOS or Linux
 - Python 3
 - Ollama
 - one installed Ollama chat model
+- **recommended: LOOK (`lk`)**
 - optional `OLLAMA_API_KEY` for live web search
 
 Future Crash uses Python's standard library only.
@@ -204,23 +230,9 @@ ephemeral. Thread-owned drawings can persist between Thread wakes.
 `d` proves the renderer with a deterministic demo. `s` clears the current
 deliberate drawing.
 
-## Optional LOOK Awareness
+## LOOK Detection
 
-LOOK is a separate project and is not bundled or required.
-
-If an executable named `lk` is already on PATH, Future Crash reports:
-
-```text
-LOOK       READY
-```
-
-Otherwise:
-
-```text
-LOOK       OPTIONAL
-```
-
-Future Crash does not contain LOOK code.
+Future Crash automatically detects an independently installed `lk` on `PATH` and reports `LOOK READY`; otherwise it reports `LOOK OPTIONAL`. No LOOK code is bundled into Future Crash.
 
 ## Configuration / State
 
