@@ -238,7 +238,7 @@ ephemeral. Thread-owned drawings can persist between Thread wakes.
 `d` proves the renderer with a deterministic demo. `s` clears the current
 deliberate drawing.
 
-![FutureCrash Error P](FC_screenshots/PICNIC.png) 
+![FutureCrash Error P](FC_screenshots/PNC.png) 
 
 ## LOOK Detection
 
