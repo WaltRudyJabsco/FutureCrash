@@ -105,8 +105,6 @@ q       guarded quit
 
 The command footer wraps by complete menu item on narrow terminals.
 
-![FutureCrash PANIC](FC_screenshots/PANIC.png)
-
 ### Shell handoff
 
 `Esc` from Ambient restores the real terminal and launches `$SHELL -i`.
@@ -239,6 +237,8 @@ ephemeral. Thread-owned drawings can persist between Thread wakes.
 
 `d` proves the renderer with a deterministic demo. `s` clears the current
 deliberate drawing.
+
+![FutureCrash Error P](FC_screenshots/PICNIC.png) 
 
 ## LOOK Detection
 
