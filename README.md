@@ -1,6 +1,8 @@
-# FUTURE CRASH // ZERO {"{"}VERSION{"}"} — Release Candidate
+# FUTURE CRASH // ZERO 
 
 **A local AI workstation disguised as a slightly haunted 1980s terminal.**
+
+![FutureCrash Normal](FC_screenshots/Normal.png)
 
 Future Crash is a dependency-light terminal companion built around one local
 Ollama model. It combines an ambient retro-computer dashboard with a Quick
@@ -10,6 +12,8 @@ Field, system telemetry, glitches, fortunes, observations, and synthesized
 bleeps.
 
 The terminal is the idle state. The assistant is the machine underneath it.
+
+![FutureCrash Normal 2](FC_screenshots/Normal_2.png)
 
 ## Future Crash + LOOK
 
@@ -31,6 +35,8 @@ FUTURE CRASH
 ```
 
 The projects remain deliberately independent. LOOK is not bundled with Future Crash and neither requires the other. They work together because they share the shell.
+
+![FutureCrash Error](FC_screenshots/Error.png)
 
 **Recommended setup: install both.**
 
@@ -101,6 +107,8 @@ q       guarded quit
 
 The command footer wraps by complete menu item on narrow terminals.
 
+![FutureCrash PANIC](FC_screenshots/PANIC.png)
+
 ### Shell handoff
 
 `Esc` from Ambient restores the real terminal and launches `$SHELL -i`.
@@ -141,6 +149,8 @@ ctrl-u      clear current conversation; persistent memory remains
 ctrl-k      guarded erase of persistent memory
 esc         return to Ambient
 ```
+
+![FutureCrash Normal 3](FC_screenshots/Normal_3.png)
 
 ## Memory
 
@@ -218,6 +228,8 @@ Example:
 
 > Start a Thread called Signal Art. Every three minutes, make a new little
 > piece of Signal Field art. Keep it varied and usually stay textually silent.
+
+![FutureCrash Error 3](FC_screenshots/Error_3.png)
 
 ## Signal Field
 
