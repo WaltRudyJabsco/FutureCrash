@@ -17,7 +17,7 @@ The terminal is the idle state. The assistant is the machine underneath it.
 
 ## Future Crash + LOOK
 
-**Future Crash works by itself, but it was designed to live alongside LOOK.**
+**Future Crash works by itself, but it was designed to live alongside LOOK.** -- https://github.com/WaltRudyJabsco/Look-Shell
 
 Future Crash is the ambient AI surface; LOOK is the fast, quiet inspection layer underneath it. Press `esc` from Future Crash to drop directly into your real interactive shell, use `lk` to inspect files, processes, ports, Git, Ollama, networking, and the machine itself, then type `exit` or press `ctrl-d` to return to Future Crash exactly where you left it.
 
@@ -36,7 +36,7 @@ FUTURE CRASH
 
 **Recommended setup: install both.**
 
-> **LOOK repository: https://github.com/WaltRudyJabsco/Look-Shell/releases/tag/v3.1.5**
+> **LOOK repository: https://github.com/WaltRudyJabsco/Look-Shell.zip**
 
 ## Requirements
 
