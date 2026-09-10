@@ -1,4 +1,4 @@
-# FUTURE CRASH // ZERO {"{"}VERSION{"}"} — Release Candidate
+# FUTURE CRASH // ZERO 
 
 **A local AI workstation disguised as a slightly haunted 1980s terminal.**
 
