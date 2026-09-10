@@ -1,256 +1,279 @@
-<img width="1350" height="845" alt="Screenshot 2026-09-02 at 8 27 13 PM" src="https://github.com/user-attachments/assets/bfb6bdfb-f074-4d86-b8a4-afcff2db176c" />
+# FUTURE CRASH // ZERO {"{"}VERSION{"}"} — Release Candidate
 
+**A local AI workstation disguised as a slightly haunted 1980s terminal.**
 
-# FUTURE CRASH // ZERO
+Future Crash is a dependency-light terminal companion built around one local
+Ollama model. It combines an ambient retro-computer dashboard with a Quick
+Oracle, a conversational Workstation, persistent memory, hosted web search,
+permissioned host-computer tools, recurring Threads, a model-controlled Signal
+Field, system telemetry, glitches, fortunes, observations, and synthesized
+bleeps.
 
-**A local AI workstation disguised as a slightly haunted 1980s
-terminal.**
-
-Future Crash is a dependency-light terminal companion built around a
-local Ollama model. It combines an ambient retro-computer dashboard with
-a quick Oracle, a full conversational Workstation, persistent memory,
-web search, permissioned access to the host computer, recurring
-background Threads, a tiny model-controlled Signal Field, telemetry,
-glitches, synthesized bleeps, and occasional machine anxiety.
-
-It is designed to feel less like a conventional chatbot and more like a
-computer you leave running.
-
-<img width="1350" height="852" alt="Screenshot 2026-09-02 at 8 29 12 PM" src="https://github.com/user-attachments/assets/2b30259f-c930-4fb3-bc90-baf48e55f71a" />
-
+The terminal is the idle state. The assistant is the machine underneath it.
 
 ## Requirements
 
-Future Crash is intentionally simple:
+- macOS or Linux
+- Python 3
+- Ollama
+- one installed Ollama chat model
+- optional `OLLAMA_API_KEY` for live web search
 
--   **macOS or Linux**
--   **Python 3**
--   **Ollama**
--   An Ollama model such as **Qwen3 8B**
--   Optional: an `OLLAMA_API_KEY` for live web search
+Future Crash uses Python's standard library only.
 
-The Python application itself uses the standard library and does not
-require a Python package installation.
+A good default model:
 
-## 1. Install Ollama
-
-Install Ollama from:
-
-https://ollama.com/
-
-Make sure Ollama is running, then download a model. Qwen3 8B is a good
-default if your machine has enough memory:
-
-``` bash
+```bash
 ollama pull qwen3:8b
 ```
 
-A smaller model also works:
+A lighter option:
 
-``` bash
+```bash
 ollama pull qwen3:4b
 ```
 
-You can use other Ollama chat models as well.
+## Run
 
-## 2. Run Future Crash
-
-From the directory containing `future_crash.py`:
-
-``` bash
+```bash
 python3 future_crash.py --model qwen3:8b
 ```
 
-Or with the smaller model:
+Check the exact file/version you launched:
 
-``` bash
-python3 future_crash.py --model qwen3:4b
+```bash
+python3 future_crash.py --version
 ```
-
-The selected model is used for the Oracle, Workstation, ambient
-observations, memory compression, Threads, and Signal Field
-instructions.
 
 ## Launch Options
 
-``` text
---model MODEL       Ollama model used for all AI work
-                    Default: qwen3:4b
-
+```text
+--model MODEL       Ollama model used for AI work
 --ollama URL        Ollama server address
-                    Default: http://127.0.0.1:11434
-
---fps NUMBER        Terminal UI refresh rate
-                    Default: 12
-
---no-ai-ambient     Disable ambient AI observations
-
---no-audio          Disable synthesized terminal sounds
+--fps NUMBER        terminal refresh rate
+--no-ai-ambient     disable ambient model observations
+--no-audio          disable audio for this launch
+--version           print version and exit
 ```
 
-Example:
+## Ambient Controls
 
-``` bash
-python3 future_crash.py \
-  --model qwen3:8b \
-  --fps 12
+```text
+esc     drop into the real interactive shell
+a       Quick Oracle
+x       Workstation
+t       Threads
+f       fortune
+r       observation
+s       clear Signal drawing
+d       Signal demo
+m       mute / unmute sound
+? / h   help
+p       panic
+q       guarded quit
 ```
 
-## Live Web Search
+The command footer wraps by complete menu item on narrow terminals.
 
-Future Crash can use Ollama's hosted web search when an `OLLAMA_API_KEY`
-is available in the environment.
+### Shell handoff
 
-For zsh:
+`Esc` from Ambient restores the real terminal and launches `$SHELL -i`.
+Your normal aliases, functions, prompt, zoxide, git, LOOK, and other shell tools
+behave normally.
 
-``` bash
-export OLLAMA_API_KEY="your-key-here"
-```
-
-You can put that line in `~/.zshrc` if you want it available
-automatically in new terminal sessions.
-
-Web search is used when a question requires current information;
-ordinary conversation remains local.
-
-## What It Does
-
-### Ambient Terminal
-
-The default screen is a living terminal dashboard with system telemetry,
-fortunes, Oracle observations, the Signal Field, audio cues, glitches,
-rare events, and occasional panic/recovery theater.
-
-It is meant to be left running.
-
-### Quick Oracle
-
-Press **A** for a short, disposable conversation with the local model.
-
-Quick Ask can read Future Crash's persistent memory, but does not itself
-add new memories.
-
-### Workstation
-
-Press **X** for the full conversational Workstation.
-
-The Workstation supports longer conversations, persistent context, host
-tools, Threads, and the model-controlled Signal Field.
-
-Inside Workstation:
-
-``` text
-Enter       Send
-Ctrl-T      Open Threads
-Ctrl-U      Clear the current conversation
-Ctrl-K      Erase persistent memory (guarded)
-Esc         Return to the ambient terminal
-```
-
-### Memory
-
-Future Crash maintains a deliberately small persistent memory:
-
--   one compressed long-term memory
--   five recent completed Workstation exchanges
-
-When the recent slots fill, the selected Ollama model compresses the
-previous memory and recent exchanges into a refreshed long-term summary.
-
-Clearing the current Workstation conversation does not erase persistent
-memory.
-
-### Host Tools and Authority
-
-The model can work with the computer rather than merely talk about it.
-
-It can propose operations such as:
-
--   listing and reading files
--   finding files
--   creating folders and files
--   appending text
--   running approved commands
--   opening files or URLs
-
-Consequential operations require operator approval.
-
-The execution model is intentionally strict:
-
-> **Model proposes → operator approves → host executes → host verifies →
-> HOST RECEIPT → model explains**
-
-The model is never allowed to decide for itself that a computer
-operation succeeded.
-
-### Threads
-
-Threads are persistent recurring tasks managed inside Future Crash.
-
-A Thread can periodically repeat an approved action, inspect the
-verified result, and report only when something meaningful changes.
-
-Examples include:
-
--   checking a flight
--   watching a web page
--   monitoring a local process
--   periodically searching for new information
-
-Press **T** from the ambient terminal, or **Ctrl-T** from Workstation,
-to inspect Threads.
-
-Threads currently run while Future Crash itself is running.
-
-### Signal Field
-
-The Signal Field is a tiny visual surface shared by the Oracle,
-Workstation, and Threads.
-
-The model can use it to create small diagrams, status displays, plots,
-labels, geometric sketches, and persistent visual state. The host
-performs the actual rasterization; the model describes what should be
-drawn.
-
-Thread-owned Signal displays can remain visible between Thread wakes.
-
-From the ambient screen:
-
-``` text
-D           Show the deterministic Signal Canvas demo
-S           Clear the current Signal drawing
-```
+Type `exit` or press `Ctrl-D` to return to the same Future Crash process.
 
 ## Audio
 
-Future Crash synthesizes its own small WAV sound effects using Python's
-standard library.
+Future Crash synthesizes small WAV cues and uses:
 
-Playback uses the operating system's normal command-line audio player:
+- macOS: `afplay`
+- Linux: `aplay`
 
--   macOS: `afplay`
--   Linux: `aplay`
+Press `m` at runtime to mute/unmute. The preference persists in:
 
-If audio is unavailable or unwanted:
-
-``` bash
-python3 future_crash.py --model qwen3:8b --no-audio
+```text
+~/.future_crash/config.json
 ```
 
-## Philosophy
+`--no-audio` overrides the saved preference for that launch.
 
-Future Crash deliberately avoids becoming a large framework.
+## Quick Oracle
 
-It is one Python program, one selected local model, one terminal, and a
-small collection of host-side systems that give the model reliable
-capabilities without pretending the model itself is the operating
-system.
+Press `a`.
 
-The terminal is the idle state.
+Quick Ask sees persistent memory but does not itself write new memories.
 
-The assistant is the machine underneath it.
+## Workstation
 
-------------------------------------------------------------------------
+Press `x`.
 
-*FUTURE CRASH // Please remain calm. The computer is attempting the same
-thing.*
+```text
+enter       send
+ctrl-t      Threads
+ctrl-u      clear current conversation; persistent memory remains
+ctrl-k      guarded erase of persistent memory
+esc         return to Ambient
+```
+
+## Memory
+
+Persistent memory uses six conceptual slots:
+
+- one rolling compressed long memory
+- five recent completed Workstation exchanges
+
+When the five recent slots fill, the selected Ollama model compresses them with
+the previous long memory into a refreshed long-memory summary.
+
+## Web Search
+
+When `OLLAMA_API_KEY` exists in the process environment, Future Crash exposes
+hosted Ollama web search and reports:
+
+```text
+WEB        READY
+```
+
+Otherwise:
+
+```text
+WEB        NO KEY
+```
+
+Web search is informational and does not require a mutation approval dialog.
+
+## Host Tools / Authority
+
+The model may propose operations such as:
+
+- list/read/find files
+- create directories
+- write/append files
+- run approved commands
+- open files or URLs
+
+Consequential operations follow one rule:
+
+```text
+model proposes
+→ operator approves
+→ host executes
+→ host verifies
+→ HOST RECEIPT
+→ model continues
+```
+
+The model does not get to claim an operation succeeded without the receipt.
+
+## Threads
+
+Threads are recurring Future Crash tasks stored in:
+
+```text
+~/.future_crash/tasks.json
+```
+
+A Thread contains one exact approved action, one interval, and one purpose.
+Threads run while Future Crash itself is running.
+
+Open the manager with `t` from Ambient or `ctrl-t` from Workstation.
+
+The special action:
+
+```json
+{"name":"model_wake"}
+```
+
+exists for recurring model-only activity such as Signal art, fortunes, notes,
+moods, or tiny autonomous status displays.
+
+Example:
+
+> Start a Thread called Signal Art. Every three minutes, make a new little
+> piece of Signal Field art. Keep it varied and usually stay textually silent.
+
+## Signal Field
+
+The Signal Field is a shared model-controlled drawing/status surface.
+
+The model has host-rendered primitives for text, lines, boxes, fills, circles,
+ellipses, arrows, plots, and direct character placement. Ordinary drawings are
+ephemeral. Thread-owned drawings can persist between Thread wakes.
+
+`d` proves the renderer with a deterministic demo. `s` clears the current
+deliberate drawing.
+
+## Optional LOOK Awareness
+
+LOOK is a separate project and is not bundled or required.
+
+If an executable named `lk` is already on PATH, Future Crash reports:
+
+```text
+LOOK       READY
+```
+
+Otherwise:
+
+```text
+LOOK       OPTIONAL
+```
+
+Future Crash does not contain LOOK code.
+
+## Configuration / State
+
+Future Crash keeps its own small state under:
+
+```text
+~/.future_crash/
+    config.json
+    tasks.json
+    tools/
+    logs/
+    task_state/
+```
+
+Persistent memory is stored separately in:
+
+```text
+~/.future_crash_memory.json
+```
+
+## Help
+
+Press `?` or `h` from Ambient for the canonical in-app command reference.
+
+---
+
+*Please remain calm. The computer is attempting the same thing.*
+
+
+## v0.9.8 — Help Paging
+
+The in-app Help screen now scrolls instead of clipping on shorter terminals.
+
+Controls:
+
+    ↑ / ↓
+    J / K       line scroll
+    PgUp/PgDn   page
+    Space       page down
+    Home / G    top
+    Esc / ? / H / Q   return
+
+The footer shows the visible help range, e.g.:
+
+    9-24/31
+
+No other behavior changed.
+
+
+## v0.9.8 — Key-label polish
+
+Displayed command keys now use the actual unshifted keystrokes accepted by the
+program: `[a]`, `[x]`, `[t]`, `[m]`, `[q]`, `ctrl-t`, `esc`, etc.
+
+Interface names and status typography remain uppercase where appropriate.
+Behavior is unchanged; uppercase keypresses continue to work.

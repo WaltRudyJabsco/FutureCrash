@@ -70,6 +70,7 @@ WHITE = CSI + "38;5;255m"
 GRAY = CSI + "38;5;245m"
 DARK = CSI + "38;5;239m"
 
+VERSION = "0.9.8"
 GLYPHS = "0123456789ABCDEF"
 SPARKS = "▁▂▃▄▅▆▇█"
 
@@ -288,13 +289,19 @@ class AudioEngine:
 
     def __init__(self, enabled=True):
         self.player = shutil.which("afplay") if sys.platform == "darwin" else shutil.which("aplay")
-        self.enabled = bool(enabled and self.player)
+        self.available = bool(self.player)
+        self.enabled = bool(enabled and self.available)
         self.directory = Path(tempfile.mkdtemp(prefix="future_crash_audio_"))
         self.cache = {}
 
     @property
     def status(self):
-        return "ON" if self.enabled else "OFF"
+        if not self.available:
+            return "UNAVAILABLE"
+        return "ON" if self.enabled else "MUTED"
+
+    def set_enabled(self, enabled):
+        self.enabled = bool(enabled and self.available)
 
     def _wav(self, name, notes):
         if name in self.cache:
@@ -324,6 +331,8 @@ class AudioEngine:
             "incident": [(180,.06,.08),(135,.07,.07)],
             "panic": [(220,.07,.11),(110,.10,.11),(330,.07,.09)],
             "recover": [(330,.05,.07),(495,.05,.07),(660,.07,.07)],
+            "shell_out": [(620,.04,.07),(470,.05,.07),(310,.07,.08)],
+            "shell_back": [(310,.04,.07),(470,.05,.07),(620,.07,.08)],
         }
         if name not in patterns:
             return
@@ -332,6 +341,24 @@ class AudioEngine:
             subprocess.Popen([self.player, str(path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except Exception:
             pass
+
+
+def wrap_menu(items, width):
+    """Wrap footer commands by whole menu item; never clip a command label."""
+    width = max(24, int(width))
+    rows, current = [], ""
+    for item in items:
+        candidate = item if not current else current + "   " + item
+        if len(candidate) <= width:
+            current = candidate
+        else:
+            if current:
+                rows.append(current)
+            # An individual item should fit ordinary terminals; keep a safe fallback.
+            current = item[:width]
+    if current:
+        rows.append(current)
+    return rows
 
 # ---------- Telemetry ----------
 
@@ -524,6 +551,46 @@ class Telemetry(threading.Thread):
         except Exception:
             return 0
 
+
+
+# ---------- Configuration ----------
+
+class ConfigStore:
+    """Small persistent preferences store. Command-line flags still win."""
+
+    def __init__(self):
+        self.root = Path.home() / ".future_crash"
+        self.path = self.root / "config.json"
+        self.data = {"audio_enabled": True}
+        self.load()
+
+    def load(self):
+        try:
+            self.root.mkdir(parents=True, exist_ok=True)
+            if self.path.exists():
+                incoming = json.loads(self.path.read_text(encoding="utf-8"))
+                if isinstance(incoming, dict):
+                    self.data.update(incoming)
+        except Exception:
+            pass
+
+    def save(self):
+        try:
+            self.root.mkdir(parents=True, exist_ok=True)
+            tmp = self.path.with_suffix(".tmp")
+            tmp.write_text(json.dumps(self.data, indent=2), encoding="utf-8")
+            tmp.replace(self.path)
+        except Exception:
+            pass
+
+    @property
+    def audio_enabled(self):
+        return bool(self.data.get("audio_enabled", True))
+
+    @audio_enabled.setter
+    def audio_enabled(self, value):
+        self.data["audio_enabled"] = bool(value)
+        self.save()
 
 # ---------- Memory ----------
 
@@ -1610,13 +1677,17 @@ class FutureCrash:
         self.term = Terminal()
         self.telemetry = Telemetry()
         self.oracle = Oracle(args.ollama, args.model)
-        self.audio = AudioEngine(enabled=not args.no_audio)
+        self.config = ConfigStore()
+        audio_pref = self.config.audio_enabled and not args.no_audio
+        self.audio = AudioEngine(enabled=audio_pref)
         self.memory = MemoryStore()
         self.signal = SignalCanvas()
         self.host = HostTools()
+        self.look_path = shutil.which("lk")
         self.threads = ThreadStore()
         self.thread_selected = 0
         self.thread_detail = False
+        self.help_scroll = 0
         self.thread_return_mode = "ambient"
         self.thread_running_id = None
         self.thread_notifications = []
@@ -1671,6 +1742,85 @@ class FutureCrash:
     def request_quit(self):
         self.quit_from = self.mode
         self.set_mode("quit")
+
+    def toggle_audio(self):
+        """Toggle runtime sound and persist the preference."""
+        if not self.audio.available:
+            self.observation = "Audio hardware path unavailable. Silence remains undefeated."
+            self.last_frame = ""
+            return
+
+        new_state = not self.audio.enabled
+        self.audio.set_enabled(new_state)
+        self.config.audio_enabled = new_state
+        self.last_frame = ""
+
+        if new_state:
+            self.audio.cue("recover")
+            self.observation = self.rng.choice([
+                "Audio restored. Ceremonial bleeps authorized.",
+                "Sound subsystem awake. Tasteful bloops resumed.",
+                "Mute order rescinded. The machine has opinions again.",
+            ])
+        else:
+            self.observation = self.rng.choice([
+                "Audio muted. The machine will now panic silently.",
+                "Ceremonial bleeps suspended until further notice.",
+                "Sound subsystem standing down with unusual dignity.",
+            ])
+
+
+    def drop_to_shell(self):
+        """
+        Give the terminal temporarily to the user's real interactive shell.
+
+        Future Crash stays alive as the parent. The main loop blocks while the
+        child shell owns the terminal, so UI state and scheduled work resume
+        intact after `exit` or Ctrl-D.
+        """
+        shell = (
+            os.environ.get("SHELL")
+            or shutil.which("zsh")
+            or shutil.which("bash")
+            or "/bin/sh"
+        )
+
+        self.audio.cue("shell_out")
+        time.sleep(.06)
+        self.term.leave()
+
+        try:
+            sys.stdout.write(
+                "\n"
+                f"FUTURE CRASH {VERSION} // SHELL\n"
+                "─────────────────────\n"
+                "Real interactive shell.  exit or Ctrl-D returns to Future Crash.\n"
+            )
+            if self.look_path:
+                sys.stdout.write(f"LOOK // READY  ({self.look_path})\n")
+            sys.stdout.write("\n")
+            sys.stdout.flush()
+
+            env = os.environ.copy()
+            env["FUTURE_CRASH_SHELL"] = "1"
+
+            # Intentionally real shell behavior: aliases, functions, rc files,
+            # LOOK, zoxide, git, prompt configuration, etc. all remain native.
+            subprocess.call([shell, "-i"], env=env)
+        except KeyboardInterrupt:
+            pass
+        finally:
+            self.term.enter()
+            self.last_frame = ""
+            self.audio.cue("shell_back")
+            self.observation = self.rng.choice([
+                "Operator returned from the lower decks.",
+                "Interactive shell released control without incident.",
+                "The command line returned the terminal in approximately original condition.",
+                "Shell excursion complete. Causality appears unchanged.",
+                "The prompt has been folded back into storage.",
+            ])
+
 
     def _parse_model_payload(self, response):
         """Apply drawing directives, then extract one proposed host operation."""
@@ -2032,8 +2182,7 @@ class FutureCrash:
             if key in ("q", "Q"):
                 self.request_quit()
             elif key == "ESC":
-                # Root Escape is intentionally harmless.
-                return
+                self.drop_to_shell()
             elif key in ("a", "A"):
                 self.audio.cue("ask")
                 self.input = ""
@@ -2050,6 +2199,11 @@ class FutureCrash:
                 if self.online and not self.busy and self.rng.random() < .85:
                     self.busy = True
                     self.oracle.ask("fortune", seed)
+            elif key in ("m", "M"):
+                self.toggle_audio()
+            elif key in ("?", "h", "H"):
+                self.help_scroll = 0
+                self.set_mode("help")
             elif key in ("p", "P"):
                 self.panic = self.rng.choice(PANICS)
                 self.panic_until = time.time() + 4.2
@@ -2122,6 +2276,25 @@ class FutureCrash:
                 self.scroll = max(0, self.scroll - 1)
             elif key == "DOWN":
                 self.scroll += 1
+
+        elif self.mode == "help":
+            if key in ("ESC", "?", "h", "H", "q", "Q"):
+                self.set_mode("ambient")
+            elif key in ("UP", "k", "K"):
+                self.help_scroll = max(0, self.help_scroll - 1)
+                self.last_frame = ""
+            elif key in ("DOWN", "j", "J", "\r", "\n"):
+                self.help_scroll += 1
+                self.last_frame = ""
+            elif key in ("PAGEUP",):
+                self.help_scroll = max(0, self.help_scroll - 8)
+                self.last_frame = ""
+            elif key in ("PAGEDOWN", " "):
+                self.help_scroll += 8
+                self.last_frame = ""
+            elif key in ("HOME", "g"):
+                self.help_scroll = 0
+                self.last_frame = ""
 
         elif self.mode == "threads":
             visible = [t for t in self.threads.tasks if t.get("state") != "cancelled"]
@@ -2293,6 +2466,8 @@ class FutureCrash:
             return self.render_tool_approval(w, h)
         if self.mode == "threads":
             return self.render_threads(w, h)
+        if self.mode == "help":
+            return self.render_help(w, h)
         if self.mode == "memory_clear":
             return self.render_memory_clear(w, h)
         return self.render_work(w, h)
@@ -2307,14 +2482,22 @@ class FutureCrash:
         # The clock is intentionally the first thing in the upper-left.
         # Future Crash is an ambient machine before it is an assistant.
         left_header = BOLD + CYAN + clock + RESET + DIM + "  " + date + RESET
-        center_header = BOLD + GREEN + "  FUTURE CRASH" + RESET + GREEN2 + " // ZERO" + RESET
+        center_header = BOLD + GREEN + "  FUTURE CRASH" + RESET + GREEN2 + f" // ZERO {VERSION}" + RESET
         right_header = DIM + model + RESET
-        occupied = len(clock) + 2 + len(date) + 2 + len("FUTURE CRASH // ZERO") + len(model)
+        occupied = len(clock) + 2 + len(date) + 2 + len(f"FUTURE CRASH // ZERO {VERSION}") + len(model)
         header = left_header + center_header + (" " * max(1, w - occupied)) + right_header
 
         left_w = max(33, int(w * .42))
         right_w = w - left_w - 3
-        panel_h = max(12, h - 7)
+
+        menu_items = [
+            "[esc] shell", "[a] ask", "[x] workstation", "[t] threads",
+            "[f] fortune", "[r] observe", "[s] signal", "[d] demo",
+            "[m] mute", "[?] help", "[p] panic", "[q] quit",
+        ]
+        menu_rows = wrap_menu(menu_items, w)
+        # Header/spacing/fortune/menu all consume rows outside the two main panels.
+        panel_h = max(10, h - (7 + len(menu_rows)))
 
         mins = int(s.uptime // 60)
         d, mins = divmod(mins, 1440)
@@ -2334,6 +2517,7 @@ class FutureCrash:
             f"AUTHORITY  {GREEN}{self.host.status()}{RESET}",
             f"FILES      {GREEN}AVAILABLE / ASK{RESET}",
             f"WEB        {(GREEN if self.host.web_ready else AMBER)}{self.host.web_status}{RESET}",
+            f"LOOK       {(GREEN if self.look_path else DARK)}{'READY' if self.look_path else 'OPTIONAL'}{RESET}",
             f"THREADS    {CYAN}{self.threads.active_count()} ACTIVE{RESET}",
             f"AUDIO      {CYAN}{self.audio.status}{RESET}",
         ]
@@ -2385,7 +2569,8 @@ class FutureCrash:
         rows.append("")
         fortune = "FORTUNE // " + self.fortune
         rows.append(fit(GREEN2 + fortune + RESET, w))
-        rows.append(DIM + "[A] ASK   [X] WORKSTATION   [T] THREADS   [F] FORTUNE   [R] OBSERVE   [S] CLEAR SIGNAL   [D] DEMO   [P] PANIC   [Q] QUIT" + RESET)
+        for menu_row in menu_rows:
+            rows.append(DIM + menu_row + RESET)
 
         if self.incident:
             phase = int(time.time() * 15) % 8
@@ -2612,6 +2797,89 @@ class FutureCrash:
             frame.append("")
         return "\n".join(safe_row(row, w) for row in frame[:h])
 
+    def render_help(self, w, h):
+        sections = [
+            ("AMBIENT",
+             [
+                 ("esc", "real interactive shell; exit or Ctrl-D returns"),
+                 ("a", "Quick Oracle"),
+                 ("x", "Workstation"),
+                 ("t", "Threads"),
+                 ("f", "new fortune"),
+                 ("r", "new observation"),
+                 ("s", "clear Signal drawing"),
+                 ("d", "Signal Canvas demo"),
+                 ("m", "mute / unmute sound"),
+                 ("p", "panic"),
+                 ("?", "this help"),
+                 ("q", "guarded quit"),
+             ]),
+            ("WORKSTATION",
+             [
+                 ("enter", "send"),
+                 ("ctrl-t", "Threads"),
+                 ("ctrl-u", "clear current conversation; keep persistent memory"),
+                 ("ctrl-k", "guarded persistent-memory erase"),
+                 ("esc", "return to Ambient"),
+             ]),
+            ("THREADS",
+             [
+                 ("enter", "details"),
+                 ("j/k or arrows", "select"),
+                 ("p", "pause selected Thread"),
+                 ("r", "resume selected Thread"),
+                 ("x", "cancel selected Thread"),
+                 ("esc", "return"),
+             ]),
+            ("CONCEPTS",
+             [
+                 ("MEMORY", "one rolling long memory + five recent Workstation exchanges"),
+                 ("WEB", "Ollama hosted web search when OLLAMA_API_KEY is available"),
+                 ("FILES", "permissioned host actions with verified HOST RECEIPTS"),
+                 ("SIGNAL", "shared model-controlled drawing/status surface"),
+                 ("MODEL WAKE", "model-only recurring Thread action for Signal art, notes, moods, etc."),
+                 ("LOOK", "optional separate project; detected if `lk` is already on PATH"),
+             ]),
+        ]
+
+        body = []
+        for title, items in sections:
+            body.append(AMBER + title + RESET)
+            for key, desc in items:
+                body.append(fit(f"  {key:<15}{desc}", w - 1))
+            body.append("")
+
+        header_rows = 3
+        footer_rows = 2
+        visible = max(4, h - header_rows - footer_rows)
+
+        max_scroll = max(0, len(body) - visible)
+        self.help_scroll = max(0, min(self.help_scroll, max_scroll))
+        shown = body[self.help_scroll:self.help_scroll + visible]
+
+        frame = [
+            BOLD + CYAN + f"FUTURE CRASH // HELP // {VERSION}" + RESET,
+            DIM + "canonical command reference" + RESET,
+            "",
+        ]
+        frame.extend(shown)
+
+        while len(frame) < h - 2:
+            frame.append("")
+
+        if max_scroll:
+            start_line = self.help_scroll + 1
+            end_line = min(len(body), self.help_scroll + visible)
+            pos = f"{start_line}-{end_line}/{len(body)}"
+            controls = f"[↑/↓ j/k] scroll   [pgup/pgdn or space] page   [home/g] top   [esc/?/h/q] return   {pos}"
+        else:
+            controls = "[esc / ? / h / q] return"
+
+        frame.append(DIM + fit(controls, w - 1) + RESET)
+        while len(frame) < h:
+            frame.append("")
+        return "\n".join(safe_row(row, w) for row in frame[:h])
+
     def render_threads(self, w, h):
         tasks = [t for t in self.threads.tasks if t.get("state") != "cancelled"]
         self.thread_selected = min(self.thread_selected, max(0, len(tasks) - 1))
@@ -2754,6 +3022,7 @@ class FutureCrash:
             RED + BOLD + "SHUTDOWN REQUEST" + RESET,
             "",
             "Future Crash is still running.",
+            DIM + "esc from Ambient opens a real shell without quitting." + RESET,
             "No emergency has been detected.",
             "",
             AMBER + "Terminate the workstation anyway?" + RESET,
@@ -2773,12 +3042,16 @@ class FutureCrash:
 # ---------- CLI ----------
 
 def parse_args():
-    p = argparse.ArgumentParser(description="Future Crash // Zero")
+    p = argparse.ArgumentParser(
+        description="Future Crash // Zero — local AI workstation / ambient terminal",
+        epilog="Ambient: esc shell · a ask · x workstation · t threads · m mute · ? help · q quit",
+    )
+    p.add_argument("--version", action="version", version=f"Future Crash {VERSION}")
     p.add_argument("--model", default="qwen3:4b", help="Ollama model to use for ALL AI work")
     p.add_argument("--ollama", default="http://127.0.0.1:11434", help="Ollama base URL")
     p.add_argument("--fps", type=int, default=12, help="UI refresh rate (default: 12)")
     p.add_argument("--no-ai-ambient", action="store_true", help="disable ambient LLM observations")
-    p.add_argument("--no-audio", action="store_true", help="disable synthesized terminal sounds")
+    p.add_argument("--no-audio", action="store_true", help="disable synthesized terminal sounds for this launch (overrides saved audio preference)")
     return p.parse_args()
 
 if __name__ == "__main__":
