@@ -36,7 +36,7 @@ FUTURE CRASH
 
 **Recommended setup: install both.**
 
-> **LOOK repository: https://github.com/WaltRudyJabsco/Look-Shell.zip**
+> **LOOK repository: [https://github.com/WaltRudyJabsco/Look-Shell.zip](https://github.com/WaltRudyJabsco/Look-Shell/releases)**
 
 ## Requirements
 
