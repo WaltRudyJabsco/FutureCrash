@@ -70,7 +70,7 @@ WHITE = CSI + "38;5;255m"
 GRAY = CSI + "38;5;245m"
 DARK = CSI + "38;5;239m"
 
-VERSION = "0.9.8"
+VERSION = "0.9.9"
 GLYPHS = "0123456789ABCDEF"
 SPARKS = "▁▂▃▄▅▆▇█"
 
@@ -2147,10 +2147,12 @@ class FutureCrash:
             seed = self.rng.choice(FORTUNES)
             self.fortune = seed
             self.next_fortune = now + self.rng.uniform(38, 85)
-            if self.online and not self.busy and self.rng.random() < .72:
+            if self.online and not self.busy:
                 self.busy = True
                 self.oracle.ask("fortune", seed)
             else:
+                # Local seed remains a graceful fallback while Ollama is
+                # offline or occupied by more important work.
                 self.audio.cue("fortune")
 
         if self.mode == "ambient" and now >= self.next_incident:
@@ -2196,7 +2198,7 @@ class FutureCrash:
                 seed = self.rng.choice(FORTUNES)
                 self.fortune = seed
                 self.audio.cue("fortune")
-                if self.online and not self.busy and self.rng.random() < .85:
+                if self.online and not self.busy:
                     self.busy = True
                     self.oracle.ask("fortune", seed)
             elif key in ("m", "M"):
@@ -2496,8 +2498,15 @@ class FutureCrash:
             "[m] mute", "[?] help", "[p] panic", "[q] quit",
         ]
         menu_rows = wrap_menu(menu_items, w)
+
+        # Fortune is part of the ambient composition, not a clipped status line.
+        # Wrap the complete text first, then reserve exactly those rows below
+        # the main panels. Three rows is a comfortable practical ceiling.
+        fortune_text = "FORTUNE // " + self.fortune
+        fortune_rows = wrap(fortune_text, max(24, w - 2))[:3]
+
         # Header/spacing/fortune/menu all consume rows outside the two main panels.
-        panel_h = max(10, h - (7 + len(menu_rows)))
+        panel_h = max(10, h - (6 + len(fortune_rows) + len(menu_rows)))
 
         mins = int(s.uptime // 60)
         d, mins = divmod(mins, 1440)
@@ -2567,8 +2576,10 @@ class FutureCrash:
             rows.append(left_box[i] + "   " + right_box[i])
 
         rows.append("")
-        fortune = "FORTUNE // " + self.fortune
-        rows.append(fit(GREEN2 + fortune + RESET, w))
+        for i, fortune_row in enumerate(fortune_rows):
+            # First row carries the label from fortune_text; wrapped continuation
+            # rows line up naturally underneath it.
+            rows.append(fit(GREEN2 + fortune_row + RESET, w))
         for menu_row in menu_rows:
             rows.append(DIM + menu_row + RESET)
 
