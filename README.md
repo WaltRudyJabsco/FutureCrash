@@ -34,13 +34,9 @@ real shell  →  lk machine
 FUTURE CRASH
 ```
 
-The projects remain deliberately independent. LOOK is not bundled with Future Crash and neither requires the other. They work together because they share the shell.
-
-![FutureCrash Error](FC_screenshots/Error.png)
-
 **Recommended setup: install both.**
 
-> **LOOK repository:** replace this line with the current LOOK GitHub URL.
+> **LOOK repository: https://github.com/WaltRudyJabsco/Look-Shell/releases/tag/v3.1.5**
 
 ## Requirements
 
@@ -87,6 +83,8 @@ python3 future_crash.py --version
 --no-audio          disable audio for this launch
 --version           print version and exit
 ```
+
+![FutureCrash Error](FC_screenshots/Error.png) 
 
 ## Ambient Controls
 
