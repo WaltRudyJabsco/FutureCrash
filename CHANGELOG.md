@@ -1,3 +1,23 @@
+## 1.1.10 — Child shell ownership title
+
+- Escaping from Future Crash into its embedded interactive shell now marks the terminal as `◌ FUTURE CRASH · SHELL`.
+- Returning to Future Crash restores `● FUTURE CRASH`.
+- No simulation, Oracle, Signal, memory, or host-tool behavior changed.
+
+## 1.1.9 — Terminal ownership title
+
+- Future Crash marks the terminal/tab title as `● FUTURE CRASH` while active.
+- Restores a neutral LOOK shell title on exit.
+- No Oracle, memory, Signal, or permission behavior changed.
+
+## 1.1.8 — Polite Oracle
+
+- Future Crash now coordinates inference capacity with LOOK Living AI when available.
+- Ask/Workstation requests get interactive leases.
+- Ambient observations, automatic fortunes, scheduled Threads, and FC memory folding yield to queued/interactive LOOK work.
+- Personality, memory, host authority, and Signal behavior remain independent.
+- No LOOK dependency: direct standalone Ollama behavior remains available.
+
 ## 1.1.7 — Dedicated Signal compiler
 
 - Signal requests bypass Workstation reasoning and compile directly with `think=false`.
