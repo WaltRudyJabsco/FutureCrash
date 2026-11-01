@@ -1,5 +1,28 @@
 # FUTURE CRASH // ZERO 
 
+## This repository today
+
+This standalone source reports **Future Crash 1.1.12**. For the combined Fabric,
+LOOK, companion installation and current shared documentation, start with
+[FutureCrash-LOOK](https://github.com/WaltRudyJabsco/FutureCrash-LOOK). This checkout remains a separate standalone program;
+its version is not the combined bundle version.
+
+```sh
+python3 future_crash.py --version
+python3 future_crash.py --help
+python3 future_crash.py --no-ai-ambient --no-audio
+```
+
+Use `--model NAME` and `--ollama URL` to select inference explicitly. The final
+command opens the dashboard without ambient model requests or audio. Interactive
+Oracle/Workstation requests still need an accessible Ollama model.
+
+![Standalone Future Crash 1.1.12](FC_screenshots/Current.png)
+
+Fresh terminal capture from this source, using an isolated demo home and
+placeholder model. Older screenshots below illustrate earlier revisions.
+[CLI reference](docs/CLI.md) records this checkout's actual help.
+
 **A local AI workstation disguised as a slightly haunted 1980s terminal.**
 
 ![FutureCrash Normal](FC_screenshots/Normal.png)
